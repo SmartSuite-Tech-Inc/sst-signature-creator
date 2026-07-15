@@ -3,8 +3,7 @@
 Internal tool for **SmartSuite Tech** — generates consistent, email-client-safe
 HTML signatures for the whole team.
 
-**Live tool:** `https://<your-github-username-or-org>.github.io/sst-signature-creator/`
-*(update this link after enabling GitHub Pages — see below)*
+**Live tool:** https://smartsuite-tech-inc.github.io/sst-signature-creator/
 
 ## How the team uses it
 
