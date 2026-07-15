@@ -197,19 +197,19 @@
     <h2>Your details</h2>
 
     <label>Full name</label>
-    <input type="text" id="f_name" value="Tim Kloppenburg">
+    <input type="text" id="f_name" value="">
 
     <label>Title</label>
-    <input type="text" id="f_title" value="Co-Founder &amp; COO">
+    <input type="text" id="f_title" value="">
 
     <label>Email</label>
-    <input type="text" id="f_email" value="tim@smartsuitetech.com">
+    <input type="text" id="f_email" value="" placeholder="name@smartsuitetech.com">
 
     <label>Website</label>
     <input type="text" id="f_web" value="smartsuitetech.com">
 
     <label>Phone</label>
-    <input type="text" id="f_phone" value="818-687-1388">
+    <input type="text" id="f_phone" value="" placeholder="XXX-XXX-XXXX">
 
     <label>Logo for background</label>
     <div class="toggle-row">
@@ -267,13 +267,17 @@
     const logo  = logoURL(currentLogo);
     const webHref = web.startsWith('http') ? web : 'https://' + web;
 
+    // Blank fields are skipped so copied signatures never contain empty rows
+    const rows = [];
+    if (name)  rows.push(`<tr><td style="font-size:26px;font-weight:bold;color:#1f6fb2;padding-bottom:${title ? 2 : 18}px;">${name}</td></tr>`);
+    if (title) rows.push(`<tr><td style="font-size:17px;color:#6cae3e;padding-bottom:18px;">${title}</td></tr>`);
+    rows.push(`<tr><td style="padding-bottom:16px;"><img src="${logo}" alt="SmartSuite Tech" height="48" style="display:block;border:0;"></td></tr>`);
+    if (email) rows.push(`<tr><td style="font-size:15px;padding-bottom:2px;"><a href="mailto:${email}" style="color:#1f6fb2;text-decoration:underline;">${email}</a></td></tr>`);
+    if (web)   rows.push(`<tr><td style="font-size:15px;padding-bottom:2px;"><a href="${webHref}" style="color:#1f6fb2;text-decoration:underline;">${web}</a></td></tr>`);
+    if (phone) rows.push(`<tr><td style="font-size:15px;color:#888888;">${phone}</td></tr>`);
+
     return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;color:#333333;line-height:1.3;">
-  <tr><td style="font-size:26px;font-weight:bold;color:#1f6fb2;padding-bottom:2px;">${name}</td></tr>
-  <tr><td style="font-size:17px;color:#6cae3e;padding-bottom:18px;">${title}</td></tr>
-  <tr><td style="padding-bottom:16px;"><img src="${logo}" alt="SmartSuite Tech" height="48" style="display:block;border:0;"></td></tr>
-  <tr><td style="font-size:15px;padding-bottom:2px;"><a href="mailto:${email}" style="color:#1f6fb2;text-decoration:underline;">${email}</a></td></tr>
-  <tr><td style="font-size:15px;padding-bottom:2px;"><a href="${webHref}" style="color:#1f6fb2;text-decoration:underline;">${web}</a></td></tr>
-  <tr><td style="font-size:15px;color:#888888;">${phone}</td></tr>
+  ${rows.join("\n  ")}
 </table>`;
   }
 
