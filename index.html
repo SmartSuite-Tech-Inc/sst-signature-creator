@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  SmartSuite Tech — Email Signature Generator
+  ═══════════════════════════════════════════════════════════════════
+  MAINTENANCE NOTES
+
+  • LOGO PATHS — edit the LOGO object in the <script> at the bottom:
+        light: "assets/logo-black.png"   (black logo, for light email backgrounds)
+        dark:  "assets/logo-white.png"   (white logo, for dark email backgrounds)
+    To update a logo, just replace the PNG file in /assets/ with the
+    same filename. Keep paths RELATIVE — the script converts them to
+    absolute URLs automatically so signatures work when this page is
+    hosted on GitHub Pages.
+
+  • BRAND COLORS — used in two places:
+      1. Page UI:      the :root CSS variables just below
+                       (--blue: #1f6fb2, --green: #6cae3e)
+      2. Signatures:   hard-coded inline in buildSig() in the <script>
+                       (email clients require inline styles, so the
+                       CSS variables can't be used there — update both!)
+  ═══════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartSuite Tech — Signature Generator</title>
+<style>
+  :root {
+    --blue: #1f6fb2;
+    --green: #6cae3e;
+    --ink: #2b2b2b;
+    --line: #e3e6ea;
+    --bg: #f5f7f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.45;
+  }
+  header {
+    background: #ffffff;
+    border-bottom: 3px solid var(--blue);
+    padding: 22px 28px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--blue);
+    letter-spacing: -0.2px;
+  }
+  header h1 span { color: var(--green); }
+  header p { margin: 4px 0 0; font-size: 13px; color: #7a8189; }
+
+  .wrap {
+    max-width: 940px;
+    margin: 26px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 760px) {
+    .wrap { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel h2 {
+    margin: 0 0 16px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9198a0;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #59616a;
+    margin: 14px 0 5px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"] {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fbfcfd;
+    color: var(--ink);
+    transition: border-color .15s, background .15s;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--blue);
+    background: #fff;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .toggle-row button {
+    flex: 1;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fbfcfd;
+    color: #59616a;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .toggle-row button.active {
+    border-color: var(--blue);
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .preview-shell { display: flex; flex-direction: column; }
+  .preview-frame {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 26px;
+    min-height: 210px;
+    display: flex;
+    align-items: center;
+    transition: background .2s;
+  }
+  .preview-frame.light { background: #ffffff; }
+  .preview-frame.dark  { background: #1c1f24; }
+
+  .actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform .08s, opacity .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-secondary { background: #eef1f4; color: #59616a; }
+  .hint {
+    font-size: 12px;
+    color: #9198a0;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green);
+    color: #fff;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: all .25s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SmartSuite<span>Tech</span> — Signature Generator</h1>
+  <p>Fill in your details, pick a logo, and copy your signature.</p>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: form -->
+  <div class="panel">
+    <h2>Your details</h2>
+
+    <label>Full name</label>
+    <input type="text" id="f_name" value="Tim Kloppenburg">
+
+    <label>Title</label>
+    <input type="text" id="f_title" value="Co-Founder &amp; COO">
+
+    <label>Email</label>
+    <input type="text" id="f_email" value="tim@smartsuitetech.com">
+
+    <label>Website</label>
+    <input type="text" id="f_web" value="smartsuitetech.com">
+
+    <label>Phone</label>
+    <input type="text" id="f_phone" value="818-687-1388">
+
+    <label>Logo for background</label>
+    <div class="toggle-row">
+      <button id="logo_light" class="active" onclick="setLogo('light')">Light background</button>
+      <button id="logo_dark" onclick="setLogo('dark')">Dark background</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: preview + actions -->
+  <div class="preview-shell">
+    <div class="panel" style="flex:1;">
+      <h2>Preview</h2>
+      <div id="frame" class="preview-frame light">
+        <div id="sig"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="copySig()">Copy signature</button>
+        <button class="btn btn-secondary" onclick="copyHTML()">Copy HTML code</button>
+      </div>
+
+      <div class="hint">
+        <strong>Apple Mail:</strong> Mail &rarr; Settings &rarr; Signatures &rarr; make a blank one, then drag your selected signature from a browser into the box.<br>
+        <strong>Outlook:</strong> use "Copy signature," then paste into Settings &rarr; Mail &rarr; Signatures.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">Copied!</div>
+
+<script>
+  // ---- Logo paths (relative to this page — see maintenance notes at top of file) ----
+  const LOGO = {
+    light: "assets/logo-black.png",  // black logo → shows on light email backgrounds
+    dark:  "assets/logo-white.png"   // white logo → shows on dark email backgrounds
+  };
+  let currentLogo = "light";
+
+  // Email clients can't resolve relative paths, so signatures embed the
+  // absolute URL of wherever this page is hosted (e.g. GitHub Pages).
+  function logoURL(mode) {
+    return new URL(LOGO[mode], window.location.href).href;
+  }
+
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  // Builds the signature HTML string (table-based for email clients)
+  function buildSig() {
+    const name  = esc(document.getElementById('f_name').value);
+    const title = esc(document.getElementById('f_title').value);
+    const email = esc(document.getElementById('f_email').value);
+    const web   = esc(document.getElementById('f_web').value);
+    const phone = esc(document.getElementById('f_phone').value);
+    const logo  = logoURL(currentLogo);
+    const webHref = web.startsWith('http') ? web : 'https://' + web;
+
+    return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;color:#333333;line-height:1.3;">
+  <tr><td style="font-size:26px;font-weight:bold;color:#1f6fb2;padding-bottom:2px;">${name}</td></tr>
+  <tr><td style="font-size:17px;color:#6cae3e;padding-bottom:18px;">${title}</td></tr>
+  <tr><td style="padding-bottom:16px;"><img src="${logo}" alt="SmartSuite Tech" height="48" style="display:block;border:0;"></td></tr>
+  <tr><td style="font-size:15px;padding-bottom:2px;"><a href="mailto:${email}" style="color:#1f6fb2;text-decoration:underline;">${email}</a></td></tr>
+  <tr><td style="font-size:15px;padding-bottom:2px;"><a href="${webHref}" style="color:#1f6fb2;text-decoration:underline;">${web}</a></td></tr>
+  <tr><td style="font-size:15px;color:#888888;">${phone}</td></tr>
+</table>`;
+  }
+
+  function render() {
+    document.getElementById('sig').innerHTML = buildSig();
+  }
+
+  function setLogo(mode) {
+    currentLogo = mode;
+    document.getElementById('logo_light').classList.toggle('active', mode==='light');
+    document.getElementById('logo_dark').classList.toggle('active', mode==='dark');
+    const frame = document.getElementById('frame');
+    frame.classList.toggle('light', mode==='light');
+    frame.classList.toggle('dark', mode==='dark');
+    render();
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1600);
+  }
+
+  // Copy the rendered signature (rich) so it pastes with formatting + logo
+  function copySig() {
+    const sig = document.getElementById('sig');
+    const range = document.createRange();
+    range.selectNode(sig);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try {
+      document.execCommand('copy');
+      toast('Signature copied!');
+    } catch(e) {
+      toast('Select it manually and copy');
+    }
+    sel.removeAllRanges();
+  }
+
+  // Copy the raw HTML code (for pasting into Outlook web / advanced use)
+  function copyHTML() {
+    const code = buildSig();
+    navigator.clipboard.writeText(code).then(
+      ()=>toast('HTML code copied!'),
+      ()=>toast('Copy failed — try again')
+    );
+  }
+
+  // Live update as they type
+  ['f_name','f_title','f_email','f_web','f_phone'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', render);
+  });
+
+  render();
+</script>
+
+</body>
+</html>
