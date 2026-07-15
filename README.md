@@ -16,8 +16,11 @@ HTML signatures for the whole team.
    - **Copy HTML code** — copies the raw HTML. Use this for Outlook on the web
      or anywhere that accepts pasted HTML source.
 5. Paste into your mail client:
-   - **Apple Mail:** Mail → Settings → Signatures → create a blank signature,
-     then paste (or drag the selected signature from the browser into the box).
+   - **Apple Mail:** Mail → Settings → Signatures → **+** to add a signature →
+     **uncheck "Always match my default message font"** (otherwise Mail strips
+     the formatting) → select the placeholder text and paste (⌘V). The logo
+     often shows as a broken/blank box *inside Settings* — that's normal;
+     send yourself a test email and it renders in real messages.
    - **Outlook:** Settings → Mail → Signatures → paste.
 
 The signatures are **table-based HTML with inline styles** — required because
